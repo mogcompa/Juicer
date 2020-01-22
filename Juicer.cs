@@ -1,14 +1,21 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
-public class Juicer : MonoBehaviour
+public class Juicer
 {
-    public void CameraShake(Camera camera, float duration, float magnitude)
+    MonoBehaviour monoBehaviour;
+    public Juicer(MonoBehaviour _monoBehaviour)
     {
-        StartCoroutine(CameraShakeCouroutine(camera, duration, magnitude));
+        monoBehaviour = _monoBehaviour;
     }
-    IEnumerator CameraShakeCouroutine(Camera camera, float duration, float magnitude)
+    public void CameraShake(Camera camera, float duration, float magnitude, Action callbackAction = null)
+    {
+        monoBehaviour.StartCoroutine(CameraShakeCouroutine(camera, duration, magnitude, callbackAction));
+    }
+    IEnumerator CameraShakeCouroutine(Camera camera, float duration, float magnitude, Action callbackAction = null)
     {
         Vector3 originalPos = camera.transform.localPosition;
         float elapsed = 0.0f;
@@ -21,44 +28,48 @@ public class Juicer : MonoBehaviour
             yield return null;
         }
         camera.transform.localPosition = originalPos;
-
+        callbackAction?.Invoke();
     }
     
-    public void TweenPosition(Transform movingObj, Vector3 endPos, AnimationCurve animationCurve, float duration)
+    public void TweenPosition(GameObject movingObj, Vector3 endPos, AnimationCurve animationCurve, float duration, Action callbackAction = null)
     {
-        StartCoroutine(TweenPositionCouroutine(movingObj, endPos, animationCurve, duration));
+        Debug.Log(callbackAction);
+        monoBehaviour.StartCoroutine(TweenPositionCouroutine(movingObj, endPos, animationCurve, duration, callbackAction));
     }
-    IEnumerator TweenPositionCouroutine(Transform movingObj, Vector3 endPos, AnimationCurve animationCurve, float duration)
+    IEnumerator TweenPositionCouroutine(GameObject movingObj, Vector3 endPos, AnimationCurve animationCurve, float duration, Action callbackAction = null)
     {
         float elapsed = 0.0f;
         float delta = 0.0f;
-        Vector3 startPosition = movingObj.position;
-        while(elapsed > duration)
+        Vector3 startPosition = movingObj.transform.position;
+        while(elapsed < duration)
         {
             delta = animationCurve.Evaluate(elapsed / duration);
-            movingObj.position = Vector3.Lerp(startPosition, endPos, delta);
+            movingObj.transform.position = Vector3.Lerp(startPosition, endPos, delta);
             elapsed += Time.deltaTime;
             yield return null;
         }
+        callbackAction?.Invoke();
     }
 }
 
 
-public class Feeder : MonoBehaviour
+public class Feeder
 {
     AnimationCurve animationCurve;
     float duration = 0.0f;
     float delta = 0.0f;
-    public Feeder(AnimationCurve _animationCurve, float _duration)
+    MonoBehaviour monoBehaviour;
+    public Feeder(MonoBehaviour _monoBehaviour, AnimationCurve _animationCurve, float _duration)
     {
+        monoBehaviour = _monoBehaviour;
         animationCurve = _animationCurve;
         duration = _duration;
     }
-    public void StartFeeder()
+    public void StartFeeder(Action callbackAction = null)
     {
-        StartCoroutine(StartFeederCouroutine(animationCurve, duration));
+        monoBehaviour.StartCoroutine(StartFeederCouroutine(animationCurve, duration, callbackAction));
     }
-    IEnumerator StartFeederCouroutine(AnimationCurve animationCurve, float duration)
+    IEnumerator StartFeederCouroutine(AnimationCurve animationCurve, float duration, Action callbackAction = null)
     {
         float elapsed = 0.0f;
         while (elapsed < duration)
@@ -67,6 +78,7 @@ public class Feeder : MonoBehaviour
             elapsed += Time.deltaTime;
             yield return null;
         }
+        callbackAction?.Invoke();
     }
     public float GetDelta()
     {
